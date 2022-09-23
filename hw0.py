@@ -62,14 +62,19 @@ def perceptron_experiment(N, d, num_exp):
         data_matrix=np.append(one_col,data_matrix, axis = 1)
         y_numbers=np.matmul(data_matrix, weight_vector)
         y_numbers=np.sign(y_numbers)
+        just_data=data_matrix
         data_matrix=np.append(data_matrix,y_numbers, axis = 1)
 
     # Initialize the return variables
 
 
         w,iterations=perceptron_learn(data_matrix, d, N)
+        p = min(abs(np.dot(w,np.transpose(just_data))));
+        r = np.linalg.norm(np.linalg.norm(just_data, np.Inf));
+        n=np.linalg.norm(w)
+        bound=(r*r * n*n/( p*p));
         num_iters[i]= iterations
-        bounds_minus_ni[i]=10000-num_iters[i]
+        bounds_minus_ni[i]=np.log(bound-num_iters[i])
     # Your code here, assign the values to num_iters and bounds_minus_ni:
 
     return num_iters, bounds_minus_ni
