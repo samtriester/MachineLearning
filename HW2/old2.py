@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-# Homework 2 Code
 import numpy as np
 import pandas as pd
 import time
@@ -11,15 +9,14 @@ import time
 
 
 def find_cross_entropy_error(w, X, y):
-    error_array =-y*X
-    error_array=np.matmul(error_array,w)
+
+    error_array = np.matmul(np.matmul(np.transpose(-y), np.transpose(w)), np.transpose(X))
 
 
+    ones=np.ones_like(error_array)
+    error_array = np.log(np.exp(error_array)+ones)
 
-    error_array = np.log(1+np.exp(error_array))
-    error_array=np.sum(error_array, axis=0)
-
-    return error_array / y.size
+    return np.sum(error_array, axis=1) / y.size
 
 
 def find_binary_error(w, X, y):
@@ -37,21 +34,22 @@ def find_binary_error(w, X, y):
     prediction = np.matmul(np.transpose(w), np.transpose(X))
     prediction = np.sign(prediction)
     # different predictions should cancel out
-    total_error = np.transpose(prediction) + y
+    total_error = prediction + y
 
     # count canceled outs and divide by total
-    binary_error = (np.count_nonzero(total_error) / (y.size))
+    binary_error = (np.count_nonzero(total_error) / (y.size * y.size))
     return binary_error
 
 
 def get_gradient(X, y, w):
-    # w is a d by d matrix
-    denom_array = -y*X
-    denom_array= denom_array*np.transpose(w)
-    denom_array = np.exp(denom_array)+1
-    num_array = y* X
-    last=num_array/denom_array
-    return -np.sum(last, axis=0) / y.size
+
+    denom_array = np.matmul(np.matmul(np.transpose(-y), np.transpose(w)), np.transpose(X))
+    ones=np.ones_like(denom_array)
+    denom_array = np.exp(denom_array)
+    denom_array=denom_array+ones
+    num_array = np.multiply(X, y)
+    denom_array = np.repeat(denom_array, 13, axis=0)
+    return -np.sum(np.divide(np.transpose(num_array), denom_array), axis=1) / y.size
 
 
 def logistic_reg(X, y, w_init, max_its, eta, grad_threshold):
@@ -62,7 +60,7 @@ def logistic_reg(X, y, w_init, max_its, eta, grad_threshold):
     #        w_init: initial value of the w vector (d+1 dimensional)
     #        max_its: maximum number of iterations to run for
     #        eta: learning rate
-    #        grad_threshold: one of the terminate conditions; 
+    #        grad_threshold: one of the terminate conditions;
     #               terminate if the magnitude of every element of gradient is smaller than grad_threshold
     # Outputs:
     #        t : number of iterations gradient descent ran for
@@ -71,19 +69,19 @@ def logistic_reg(X, y, w_init, max_its, eta, grad_threshold):
 
     # Your code here, assign the proper values to t, w, and e_in:
     cont = True
-    t = -1
+    t = 0
     w = w_init
     change = 0
     while cont == True:
         t = t + 1
-        change = get_gradient(X, y, w).reshape(14,1)
+        change = get_gradient(X, y, np.repeat(w, y.size, axis=1)).reshape(w.size, 1)
 
-        w = w+ eta * change
+        w = np.subtract(w, eta * change)
         if np.all(change < grad_threshold) or t > max_its:
             cont = False
 
-
-    e_in = find_cross_entropy_error(w, X, y)
+    w_matrix = np.repeat(w, y.size, axis=1)
+    e_in = find_cross_entropy_error(w_matrix, X, y)
     return t, w, e_in
 
 
@@ -94,16 +92,14 @@ def main():
     # Load test data
     test_data = pd.read_csv('clevelandtestnorm.csv')
     train_X = train_data.loc[:, train_data.columns != 'heartdisease::category|0|1'].to_numpy()
-    train_X=np.append(train_X,np.ones((train_X.shape[0],1)),axis=1)
     train_Y = train_data['heartdisease::category|0|1'].map({0: -1, 1: 1}).to_numpy().reshape(152, 1)
-    w_init = np.zeros((14, 1))
+    w_init = np.zeros((13, 1))
 
     test_X = test_data.loc[:, test_data.columns != 'heartdisease::category|0|1'].to_numpy()
-    test_X=np.append(test_X,np.ones((test_X.shape[0],1)),axis=1)
     test_Y = test_data['heartdisease::category|0|1'].map({0: -1, 1: 1}).to_numpy().reshape(145, 1)
     # Your code here
     tick=time.perf_counter()
-    t, w, e_in = logistic_reg(train_X, train_Y, w_init, 1000000 , 7.7 , 0.000001 )
+    t, w, e_in = logistic_reg(train_X, train_Y, w_init, 1000000 , .01 , 0.000001 )
     tock=time.perf_counter()
     print("%8f seconds"%(tock-tick))
     print(w)
