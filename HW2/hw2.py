@@ -11,7 +11,7 @@ import time
 
 
 def find_cross_entropy_error(w, X, y):
-    error_array =-y*X
+    error_array =y*X
     error_array=np.matmul(error_array,w)
 
 
@@ -71,7 +71,7 @@ def logistic_reg(X, y, w_init, max_its, eta, grad_threshold):
 
     # Your code here, assign the proper values to t, w, and e_in:
     cont = True
-    t = -1
+    t = 0
     w = w_init
     change = 0
     while cont == True:
@@ -84,15 +84,16 @@ def logistic_reg(X, y, w_init, max_its, eta, grad_threshold):
 
 
     e_in = find_cross_entropy_error(w, X, y)
+    t=t-1
     return t, w, e_in
 
 
 def main():
     # Load training data
-    train_data = pd.read_csv('clevelandtrainnorm.csv')
+    train_data = pd.read_csv('clevelandtrain.csv')
 
     # Load test data
-    test_data = pd.read_csv('clevelandtestnorm.csv')
+    test_data = pd.read_csv('clevelandtest.csv')
     train_X = train_data.loc[:, train_data.columns != 'heartdisease::category|0|1'].to_numpy()
     train_X=np.append(train_X,np.ones((train_X.shape[0],1)),axis=1)
     train_Y = train_data['heartdisease::category|0|1'].map({0: -1, 1: 1}).to_numpy().reshape(152, 1)
@@ -103,10 +104,9 @@ def main():
     test_Y = test_data['heartdisease::category|0|1'].map({0: -1, 1: 1}).to_numpy().reshape(145, 1)
     # Your code here
     tick=time.perf_counter()
-    t, w, e_in = logistic_reg(train_X, train_Y, w_init, 1000000 , 7.7 , 0.000001 )
+    t, w, e_in = logistic_reg(train_X, train_Y, w_init, 10000, 0.00001 , .001)
     tock=time.perf_counter()
     print("%8f seconds"%(tock-tick))
-    print(w)
     print("In Sample Binary Error %6.5f" % (find_binary_error(w, train_X, train_Y)))
     print("Test Binary Error %6.5f" % (find_binary_error(w, test_X, test_Y)))
     print("Cross-Entropy Error %6.5f" % e_in)
