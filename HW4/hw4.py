@@ -10,12 +10,15 @@ def oob(X_train, y_train, tree, oob_array, point_array):
     # TODO oob array is now updated vote count
     # use sign of oob array for error
     # iterate over point_array
+    div=np.count_nonzero(oob_array)
+    if div==0:
+        div=np.count_nonzero(point_array)
     for i in range(0, point_array.size):
 
         if(point_array[i]==1):
             oob_array[i]=oob_array[i]+int(tree.predict(np.transpose(X_train[i].reshape(X_train.shape[1],1))))
     test_guess=np.sign(oob_array)
-    return ((test_guess.size-np.count_nonzero(test_guess+y_train))/test_guess.size)
+    return ((test_guess.size-np.count_nonzero(test_guess+y_train))/div)
 def single_decision_tree(X_train, y_train, X_test, y_test):
     clf=DecisionTreeClassifier(criterion='entropy')
     clf.fit(X_train,y_train)
@@ -43,11 +46,8 @@ def bagged_trees(X_train, y_train, X_test, y_test, num_bags):
     # but **not** 'RandomForestClassifier' or any other bagging function
     oob_array=[0]*y_train.size
     out_of_bag_error =0
-    test_error =0
     clf = DecisionTreeClassifier(criterion='entropy')
     oob_plot=[]
-    trees=[]
-    test_array=[]
     X=np.zeros_like(X_train)
     y=np.zeros_like(y_train)
     error_array = np.zeros_like(y_test)
